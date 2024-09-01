@@ -88,6 +88,7 @@ type IsuCondition struct {
 	Timestamp  time.Time `db:"timestamp"`
 	IsSitting  bool      `db:"is_sitting"`
 	Condition  string    `db:"condition"`
+	CLevel     string    `db:"condition_level"`
 	Message    string    `db:"message"`
 	CreatedAt  time.Time `db:"created_at"`
 }
@@ -1026,52 +1027,56 @@ func getIsuConditions(c echo.Context) error {
 func getIsuConditionsFromDB(db *sqlx.DB, jiaIsuUUID string, endTime time.Time, conditionLevel map[string]interface{}, startTime time.Time,
 	limit int, isuName string) ([]*GetIsuConditionResponse, error) {
 
+	cLevelList := make([]string, 0, len(conditionLevel))
+	for cLevel := range conditionLevel {
+		cLevelList = append(cLevelList, cLevel)
+	}
+	if len(cLevelList) == 0 {
+		return []*GetIsuConditionResponse{}, nil
+	}
+
 	conditions := []IsuCondition{}
-	var err error
 
 	if startTime.IsZero() {
-		err = db.Select(&conditions,
+		query, args, err := sqlx.In(
 			"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-				"	AND `timestamp` < ?"+
-				"	ORDER BY `timestamp` DESC",
-			jiaIsuUUID, endTime,
-		)
-	} else {
-		err = db.Select(&conditions,
-			"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
-				"	AND `timestamp` < ?"+
-				"	AND ? <= `timestamp`"+
-				"	ORDER BY `timestamp` DESC",
-			jiaIsuUUID, endTime, startTime,
-		)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("db error: %v", err)
-	}
-
-	conditionsResponse := []*GetIsuConditionResponse{}
-	for _, c := range conditions {
-		cLevel, err := calculateConditionLevel(c.Condition)
+				"	AND `timestamp` < ? AND condition_level IN (?)"+
+				"	ORDER BY `timestamp` DESC LIMIT ?",
+			jiaIsuUUID, endTime, cLevelList, limit)
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("db error: %v", err)
 		}
-
-		if _, ok := conditionLevel[cLevel]; ok {
-			data := GetIsuConditionResponse{
-				JIAIsuUUID:     c.JIAIsuUUID,
-				IsuName:        isuName,
-				Timestamp:      c.Timestamp.Unix(),
-				IsSitting:      c.IsSitting,
-				Condition:      c.Condition,
-				ConditionLevel: cLevel,
-				Message:        c.Message,
-			}
-			conditionsResponse = append(conditionsResponse, &data)
+		err = db.Select(&conditions, query, args...)
+		if err != nil {
+			return nil, fmt.Errorf("db error: %v", err)
+		}
+	} else {
+		query, args, err := sqlx.In(
+			"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ?"+
+				"	AND `timestamp` < ? AND ? <= `timestamp` AND condition_level IN (?)"+
+				"	ORDER BY `timestamp` DESC LIMIT ?",
+			jiaIsuUUID, endTime, startTime, cLevelList, limit)
+		if err != nil {
+			return nil, fmt.Errorf("db error: %v", err)
+		}
+		err = db.Select(&conditions, query, args...)
+		if err != nil {
+			return nil, fmt.Errorf("db error: %v", err)
 		}
 	}
 
-	if len(conditionsResponse) > limit {
-		conditionsResponse = conditionsResponse[:limit]
+	conditionsResponse := make([]*GetIsuConditionResponse, 0, len(conditions))
+	for _, c := range conditions {
+		data := GetIsuConditionResponse{
+			JIAIsuUUID:     c.JIAIsuUUID,
+			IsuName:        isuName,
+			Timestamp:      c.Timestamp.Unix(),
+			IsSitting:      c.IsSitting,
+			Condition:      c.Condition,
+			ConditionLevel: c.CLevel,
+			Message:        c.Message,
+		}
+		conditionsResponse = append(conditionsResponse, &data)
 	}
 
 	return conditionsResponse, nil
