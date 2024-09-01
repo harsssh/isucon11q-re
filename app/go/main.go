@@ -190,7 +190,18 @@ func NewMySQLConnectionEnv() *MySQLConnectionEnv {
 }
 
 func (mc *MySQLConnectionEnv) ConnectDB() (*sqlx.DB, error) {
-	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?parseTime=true&loc=Asia%%2FTokyo", mc.User, mc.Password, mc.Host, mc.Port, mc.DBName)
+	conf := mysql.Config{
+		User:              mc.User,
+		Passwd:            mc.Password,
+		Net:               "tcp",
+		Addr:              fmt.Sprintf("%v:%v", mc.Host, mc.Port),
+		DBName:            mc.DBName,
+		Loc:               time.Local,
+		InterpolateParams: true,
+		MultiStatements:   false,
+		ParseTime:         true,
+	}
+	dsn := conf.FormatDSN()
 	return sqlx.Open("mysql", dsn)
 }
 
