@@ -29,7 +29,7 @@ tasks:
     desc: Build the application
     dir: "{{.SRC_DIR}}"
     cmds:
-      - make
+      - go build
 
   ####################
   #     Utility      #
