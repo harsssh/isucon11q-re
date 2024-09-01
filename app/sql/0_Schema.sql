@@ -24,8 +24,8 @@ CREATE TABLE `isu_condition` (
   `message` VARCHAR(255) NOT NULL,
   `created_at` DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
     `condition_level` VARCHAR(8) AS (CASE
-      WHEN INSTR(condition, 'true') = 0 THEN 'info'
-      WHEN INSTR(condition, 'false') = 0 THEN 'critical'
+      WHEN INSTR(`condition`, 'true') = 0 THEN 'info'
+      WHEN INSTR(`condition`, 'false') = 0 THEN 'critical'
       ELSE 'warning'
     END) STORED,
   PRIMARY KEY(`id`),
