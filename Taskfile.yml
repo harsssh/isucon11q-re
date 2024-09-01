@@ -4,7 +4,7 @@ version: "3"
 
 vars:
   # Frequently changed
-  SERVICES: mysql nginx
+  SERVICES: mysql nginx isucondition.go
   REPO_DIR: /home/isucon/repo
   SRC_DIR: /home/isucon/repo/app/go
 
