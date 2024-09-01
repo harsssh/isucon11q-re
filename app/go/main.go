@@ -21,6 +21,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
+	pprotein "github.com/kaz/pprotein/integration/echov4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -252,6 +253,8 @@ func main() {
 		e.Logger.Fatalf("missing: POST_ISUCONDITION_TARGET_BASE_URL")
 		return
 	}
+
+	pprotein.Integrate(e)
 
 	serverPort := fmt.Sprintf(":%v", getEnv("SERVER_APP_PORT", "3000"))
 	e.Logger.Fatal(e.Start(serverPort))
