@@ -334,6 +334,12 @@ func postInitialize(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	_, err = http.Get("http://localhost:9000/api/group/collect")
+	if err != nil {
+		// エラーレスポンスは返さない
+		c.Logger().Errorf("failed to request to group service: %v", err)
+	}
+
 	return c.JSON(http.StatusOK, InitializeResponse{
 		Language: "go",
 	})
