@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -190,7 +191,19 @@ func NewMySQLConnectionEnv() *MySQLConnectionEnv {
 }
 
 func (mc *MySQLConnectionEnv) ConnectDB() (*sqlx.DB, error) {
-	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?parseTime=true&loc=Asia%%2FTokyo", mc.User, mc.Password, mc.Host, mc.Port, mc.DBName)
+	conf := mysql.Config{
+		User:                 mc.User,
+		Passwd:               mc.Password,
+		Net:                  "tcp",
+		Addr:                 net.JoinHostPort(mc.Host, mc.Port),
+		DBName:               mc.DBName,
+		Loc:                  time.Local,
+		InterpolateParams:    true,
+		MultiStatements:      false,
+		ParseTime:            true,
+		AllowNativePasswords: true,
+	}
+	dsn := conf.FormatDSN()
 	return sqlx.Open("mysql", dsn)
 }
 
@@ -245,7 +258,7 @@ func main() {
 		e.Logger.Fatalf("failed to connect db: %v", err)
 		return
 	}
-	db.SetMaxOpenConns(10)
+	db.SetMaxOpenConns(50)
 	defer db.Close()
 
 	postIsuConditionTargetBaseURL = os.Getenv("POST_ISUCONDITION_TARGET_BASE_URL")
