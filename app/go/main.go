@@ -1127,8 +1127,10 @@ func getTrend(c echo.Context) error {
 		characterInfoIsuConditions := []*TrendCondition{}
 		characterWarningIsuConditions := []*TrendCondition{}
 		characterCriticalIsuConditions := []*TrendCondition{}
+		// 各isuの最新のコンディションを取得
 		for _, isu := range isuList {
 			conditions := []IsuCondition{}
+			// TODO: LIMIT 1 で良さそう
 			err = db.Select(&conditions,
 				"SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = ? ORDER BY TIMESTAMP DESC",
 				isu.JIAIsuUUID,
