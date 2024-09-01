@@ -1210,11 +1210,13 @@ func postIsuCondition(c echo.Context) error {
 			return c.String(http.StatusBadRequest, "bad request body")
 		}
 
-		values[i]["jia_isu_uuid"] = jiaIsuUUID
-		values[i]["timestamp"] = time.Unix(cond.Timestamp, 0)
-		values[i]["is_sitting"] = cond.IsSitting
-		values[i]["condition"] = cond.Condition
-		values[i]["message"] = cond.Message
+		values[i] = map[string]interface{}{
+			"jia_isu_uuid": jiaIsuUUID,
+			"timestamp":    time.Unix(cond.Timestamp, 0),
+			"is_sitting":   cond.IsSitting,
+			"condition":    cond.Condition,
+			"message":      cond.Message,
+		}
 	}
 
 	_, err = tx.NamedExec(
