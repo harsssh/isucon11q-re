@@ -23,11 +23,14 @@ CREATE TABLE `isu_condition` (
   `condition` VARCHAR(255) NOT NULL,
   `message` VARCHAR(255) NOT NULL,
   `created_at` DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
-    `condition_level` VARCHAR(8) AS (CASE
+  # NOTE: 0_InitData.sql の INSERT 時のエラーは手動で直しました
+  `condition_level` VARCHAR(8) AS (
+    CASE
       WHEN INSTR(`condition`, 'true') = 0 THEN 'info'
       WHEN INSTR(`condition`, 'false') = 0 THEN 'critical'
       ELSE 'warning'
-    END) STORED,
+    END
+  ) STORED,
   PRIMARY KEY(`id`),
   INDEX `jia_isu_uuid_timestamp_idx` (`jia_isu_uuid`, `timestamp`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET=utf8mb4;
